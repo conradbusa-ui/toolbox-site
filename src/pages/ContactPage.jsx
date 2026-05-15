@@ -13,7 +13,7 @@ export default function ContactPage() {
         <h2>Email</h2>
         <p>
           The best way to reach us is by email:{' '}
-          <a href="mailto:conradbusa@gmail.com" style={{ fontWeight: 600 }}>conradbusa@gmail.com</a>
+          <a href="mailto:freetoolcabinet@gmail.com" style={{ fontWeight: 600 }}>freetoolcabinet@gmail.com</a>
         </p>
 
         <h2>What to Include</h2>
