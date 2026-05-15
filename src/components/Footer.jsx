@@ -29,7 +29,7 @@ export default function Footer() {
             <Link to="/privacy-policy">Privacy Policy</Link>
             <Link to="/terms-of-service">Terms of Service</Link>
             <Link to="/contact">Contact</Link>
-            <a href="mailto:conradbusa@gmail.com">conradbusa@gmail.com</a>
+            <a href="mailto:freetoolcabinet@gmail.com">freetoolcabinet@gmail.com</a>
           </div>
         </div>
 
