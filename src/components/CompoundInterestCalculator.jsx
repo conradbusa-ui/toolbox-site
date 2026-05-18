@@ -34,19 +34,18 @@ function ResultRow({ label, value, highlight, muted }) {
 }
 
 const FREQ_OPTIONS = [
-  { label: 'Daily',     value: 365  },
-  { label: 'Weekly',    value: 52   },
-  { label: 'Monthly',   value: 12   },
-  { label: 'Quarterly', value: 4    },
-  { label: 'Annually',  value: 1    },
+  { label: 'Daily',    value: 365 },
+  { label: 'Weekly',   value: 52  },
+  { label: 'Monthly',  value: 12  },
+  { label: 'Annually', value: 1   },
 ];
 
 export default function CompoundInterestCalculator() {
   const [currency, setCurrency]         = useState('$');
   const [principal, setPrincipal]       = useState('');
-  const [rate, setRate]                 = useState('');
+  const [rate, setRate]                 = useState('40');
   const [years, setYears]               = useState('');
-  const [compoundFreq, setCompoundFreq] = useState(12);
+  const [compoundFreq, setCompoundFreq] = useState(365);
   const [contribution, setContribution] = useState('');
   const [contribFreq, setContribFreq]   = useState('monthly'); // monthly | yearly
   const [result, setResult]             = useState(null);
@@ -124,8 +123,8 @@ export default function CompoundInterestCalculator() {
   };
 
   const reset = () => {
-    setPrincipal(''); setRate(''); setYears('');
-    setContribution(''); setCompoundFreq(12);
+    setPrincipal(''); setRate('40'); setYears('');
+    setContribution(''); setCompoundFreq(365);
     setResult(null); setShowTable(false);
   };
 
