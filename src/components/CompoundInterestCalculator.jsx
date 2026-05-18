@@ -48,42 +48,47 @@ export default function CompoundInterestCalculator() {
   const [compoundFreq, setCompoundFreq] = useState(365);
   const [contribution, setContribution] = useState('');
   const [contribFreq, setContribFreq]   = useState('monthly'); // monthly | yearly
+  const [rateMode, setRateMode]         = useState('per-period'); // 'annual' | 'per-period'
   const [result, setResult]             = useState(null);
   const [showTable, setShowTable]       = useState(false);
 
+  const freqLabel = FREQ_OPTIONS.find(f => f.value === compoundFreq)?.label.toLowerCase() ?? 'period';
+
   const calculate = () => {
     const P  = parseFloat(principal) || 0;
-    const r  = parseFloat(rate) / 100;
+    // In per-period mode, rate is applied each period directly (r per period).
+    // In annual mode, rate is split across periods as usual (r/n per period).
+    const rInput = parseFloat(rate) / 100;
     const t  = parseFloat(years);
     const n  = compoundFreq;
+    // rPeriod = rate applied each compounding period
+    const rPeriod = rateMode === 'per-period' ? rInput : rInput / n;
+    const r  = rateMode === 'per-period' ? rInput * n : rInput; // effective annual for display
     const c  = parseFloat(contribution) || 0;
     const cp = contribFreq === 'monthly' ? 12 : 1; // contributions per year
 
-    if ((P <= 0 && c <= 0) || isNaN(r) || isNaN(t) || t <= 0) return;
+    if ((P <= 0 && c <= 0) || isNaN(rInput) || isNaN(t) || t <= 0) return;
 
-    // Year-by-year breakdown
+    // Year-by-year breakdown using rPeriod per compounding period
     const breakdown = [];
     let balance      = P;
     let totalContrib = P;
 
     for (let y = 1; y <= Math.ceil(t); y++) {
-      const isPartial  = y > t; // shouldn't happen with ceil but safety
-      const yearFrac   = Math.min(y, t) - (y - 1);
+      const yearFrac     = Math.min(y, t) - (y - 1);
+      const startBalance = balance;
+      const nPer         = n * yearFrac;
 
       // Compound the balance for this year
-      const startBalance = balance;
-      balance = balance * Math.pow(1 + r / n, n * yearFrac);
+      balance = startBalance * Math.pow(1 + rPeriod, nPer);
 
-      // Add contributions (simplified: add at each contribution period)
+      // Add contributions using future value of annuity
       const contribsThisYear = cp * yearFrac;
       const contribAmount    = c * contribsThisYear;
 
-      // For contributions, use future value of annuity formula per year
       if (c > 0) {
-        const rPer  = r / n;
-        const nPer  = n * yearFrac;
-        const fvContrib = c * (cp / n) * ((Math.pow(1 + rPer, nPer) - 1) / rPer);
-        balance = startBalance * Math.pow(1 + r / n, n * yearFrac) + fvContrib;
+        const fvContrib = c * (cp / n) * ((Math.pow(1 + rPeriod, nPer) - 1) / rPeriod);
+        balance = startBalance * Math.pow(1 + rPeriod, nPer) + fvContrib;
         totalContrib += contribAmount;
       }
 
@@ -97,26 +102,25 @@ export default function CompoundInterestCalculator() {
     }
 
     // Final precise calculation
+    const totalPer = n * t;
     let finalBalance;
     if (c === 0) {
-      finalBalance = P * Math.pow(1 + r / n, n * t);
+      finalBalance = P * Math.pow(1 + rPeriod, totalPer);
     } else {
-      const rPer       = r / n;
-      const totalPer   = n * t;
-      const fvPrincipal = P * Math.pow(1 + rPer, totalPer);
+      const fvPrincipal      = P * Math.pow(1 + rPeriod, totalPer);
       const contribPerPeriod = c / (n / cp);
-      const fvContribs  = contribPerPeriod * ((Math.pow(1 + rPer, totalPer) - 1) / rPer);
+      const fvContribs       = contribPerPeriod * ((Math.pow(1 + rPeriod, totalPer) - 1) / rPeriod);
       finalBalance = fvPrincipal + fvContribs;
     }
 
-    const totalDeposited  = P + c * cp * t;
-    const totalInterest   = finalBalance - totalDeposited;
-    const growthPct       = P > 0 ? ((finalBalance - P) / P) * 100 : 0;
-    const effectiveRate   = (Math.pow(1 + r / n, n) - 1) * 100;
+    const totalDeposited = P + c * cp * t;
+    const totalInterest  = finalBalance - totalDeposited;
+    const growthPct      = P > 0 ? ((finalBalance - P) / P) * 100 : 0;
+    const effectiveRate  = (Math.pow(1 + rPeriod, n) - 1) * 100;
 
     setResult({
       finalBalance, totalDeposited, totalInterest,
-      growthPct, effectiveRate, P, r, t, n, c, cp,
+      growthPct, effectiveRate, P, rInput, rateMode, t, n, c, cp,
       breakdown,
     });
     setShowTable(false);
@@ -124,7 +128,7 @@ export default function CompoundInterestCalculator() {
 
   const reset = () => {
     setPrincipal(''); setRate('40'); setYears('');
-    setContribution(''); setCompoundFreq(365);
+    setContribution(''); setCompoundFreq(365); setRateMode('per-period');
     setResult(null); setShowTable(false);
   };
 
@@ -177,8 +181,10 @@ export default function CompoundInterestCalculator() {
                 onKeyDown={e => e.key === 'Enter' && calculate()} />
             </div>
             <div className="form-group" style={{ flex: 2 }}>
-              <label htmlFor="ci-rate">Annual Interest Rate %</label>
-              <input id="ci-rate" type="number" min="0" step="0.01" placeholder="e.g. 8"
+              <label htmlFor="ci-rate">
+                Interest Rate % {rateMode === 'per-period' ? `per ${freqLabel}` : '(annual)'}
+              </label>
+              <input id="ci-rate" type="number" min="0" step="0.01" placeholder="e.g. 40"
                 value={rate}
                 onChange={e => { setRate(e.target.value); setResult(null); }}
                 onKeyDown={e => e.key === 'Enter' && calculate()} />
@@ -204,6 +210,28 @@ export default function CompoundInterestCalculator() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Rate mode */}
+          <div style={{ marginBottom: '18px' }}>
+            <label>Rate Type</label>
+            <div className="tag-row">
+              <button
+                className={`tag${rateMode === 'per-period' ? ' active' : ''}`}
+                onClick={() => { setRateMode('per-period'); setResult(null); }}>
+                % per {freqLabel} (rolls up each {freqLabel})
+              </button>
+              <button
+                className={`tag${rateMode === 'annual' ? ' active' : ''}`}
+                onClick={() => { setRateMode('annual'); setResult(null); }}>
+                % per year (split across periods)
+              </button>
+            </div>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-3)', marginTop: '6px', marginBottom: 0 }}>
+              {rateMode === 'per-period'
+                ? `e.g. 40% daily: $100 → $140 on day 1 → $196 on day 2 → keeps compounding each ${freqLabel}`
+                : `e.g. 40% annual split ${compoundFreq}x per year: each period earns ${(40 / compoundFreq).toFixed(4)}%`}
+            </p>
           </div>
 
           {/* Optional contributions */}
