@@ -11,6 +11,22 @@ function fmt(n, currency) {
   });
 }
 
+// Rounded to nearest $1000 — cleaner for large numbers
+function fmtInt(n, currency) {
+  return currency + (Math.round(n / 1000) * 1000).toLocaleString('en');
+}
+
+// Clean percentage — trims trailing zeros, max 2 decimal places
+function fmtPct(n) {
+  if (Math.abs(n) >= 1000) {
+    return Math.round(n).toLocaleString('en') + '%';
+  }
+  return parseFloat(n.toFixed(2)).toLocaleString('en', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }) + '%';
+}
+
 function ResultRow({ label, value, highlight, muted }) {
   return (
     <div style={{
@@ -313,43 +329,43 @@ export default function CompoundInterestCalculator() {
                   Future Value after {result.tRaw} {result.timePeriodUnit.charAt(0).toUpperCase() + result.timePeriodUnit.slice(1)}
                 </div>
                 <div style={{ fontSize: 'clamp(2.5rem, 8vw, 4rem)', fontWeight: 700, color: '#5eead4', letterSpacing: '-0.04em', lineHeight: 1 }}>
-                  {fmt(result.finalBalance, currency)}
+                  {fmtInt(result.finalBalance, currency)}
                 </div>
                 <div style={{ fontSize: '0.82rem', color: '#94a3b8', marginTop: '8px' }}>
-                  Effective annual rate: {result.effectiveRate.toFixed(3)}%
+                  Effective annual rate: {fmtPct(result.effectiveRate)}
                 </div>
               </div>
 
               {/* Key figures */}
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: '4px', marginBottom: '20px' }}>
-                <ResultRow label="Initial Principal"      value={fmt(result.P, currency)} />
+                <ResultRow label="Initial Principal"      value={fmtInt(result.P, currency)} />
                 {result.c > 0 && (
                   <ResultRow
                     label={`Total Contributions (${result.cp === 12 ? 'monthly' : 'yearly'})`}
-                    value={fmt(result.totalDeposited - result.P, currency)}
+                    value={fmtInt(result.totalDeposited - result.P, currency)}
                   />
                 )}
-                <ResultRow label="Total Amount Deposited" value={fmt(result.totalDeposited, currency)} />
-                <ResultRow label="Total Interest Earned"  value={fmt(result.totalInterest, currency)} />
-                <ResultRow label="Final Balance"          value={fmt(result.finalBalance, currency)} highlight />
+                <ResultRow label="Total Amount Deposited" value={fmtInt(result.totalDeposited, currency)} />
+                <ResultRow label="Total Interest Earned"  value={fmtInt(result.totalInterest, currency)} />
+                <ResultRow label="Final Balance"          value={fmtInt(result.finalBalance, currency)} highlight />
               </div>
 
               {/* Stats */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
                 <div className="result-stat">
-                  <div className="stat-value">{result.growthPct.toFixed(1)}%</div>
+                  <div className="stat-value">{fmtPct(result.growthPct)}</div>
                   <div className="stat-label">Total Growth</div>
                 </div>
                 <div className="result-stat" style={{ gridColumn: 'span 1' }}>
-                  <div className="stat-value" style={{ fontSize: 'clamp(0.75rem, 2vw, 1.1rem)', wordBreak: 'break-all', whiteSpace: 'normal' }}>{result.effectiveRate.toFixed(3)}%</div>
+                  <div className="stat-value" style={{ fontSize: 'clamp(0.75rem, 2vw, 1.1rem)', wordBreak: 'break-all', whiteSpace: 'normal' }}>{fmtPct(result.effectiveRate)}</div>
                   <div className="stat-label">Effective Annual Rate</div>
                 </div>
                 <div className="result-stat">
-                  <div className="stat-value" style={{ fontSize: '1rem' }}>{fmt(result.totalInterest, currency)}</div>
+                  <div className="stat-value" style={{ fontSize: '1rem' }}>{fmtInt(result.totalInterest, currency)}</div>
                   <div className="stat-label">Interest Earned</div>
                 </div>
                 <div className="result-stat">
-                  <div className="stat-value" style={{ fontSize: '1rem' }}>{fmt(result.finalBalance - result.totalDeposited, currency)}</div>
+                  <div className="stat-value" style={{ fontSize: '1rem' }}>{fmtInt(result.finalBalance - result.totalDeposited, currency)}</div>
                   <div className="stat-label">Profit on Deposits</div>
                 </div>
               </div>
@@ -403,9 +419,9 @@ export default function CompoundInterestCalculator() {
                       {result.breakdown.map(row => (
                         <tr key={row.period} style={{ borderBottom: '1px solid var(--border)' }}>
                           <td style={{ padding: '7px 10px', textAlign: 'right', color: 'var(--text-3)' }}>{result.timePeriodUnit.charAt(0).toUpperCase() + result.timePeriodUnit.slice(1,-1)} {row.period}</td>
-                          <td style={{ padding: '7px 10px', textAlign: 'right', fontWeight: 600 }}>{fmt(row.balance, currency)}</td>
-                          <td style={{ padding: '7px 10px', textAlign: 'right', color: 'var(--text-2)' }}>{fmt(row.totalContrib, currency)}</td>
-                          <td style={{ padding: '7px 10px', textAlign: 'right', color: '#f97316', fontWeight: 600 }}>{fmt(row.interestEarned, currency)}</td>
+                          <td style={{ padding: '7px 10px', textAlign: 'right', fontWeight: 600 }}>{fmtInt(row.balance, currency)}</td>
+                          <td style={{ padding: '7px 10px', textAlign: 'right', color: 'var(--text-2)' }}>{fmtInt(row.totalContrib, currency)}</td>
+                          <td style={{ padding: '7px 10px', textAlign: 'right', color: '#f97316', fontWeight: 600 }}>{fmtInt(row.interestEarned, currency)}</td>
                         </tr>
                       ))}
                     </tbody>
