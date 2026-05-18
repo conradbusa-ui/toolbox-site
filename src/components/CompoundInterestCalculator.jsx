@@ -81,22 +81,30 @@ export default function CompoundInterestCalculator() {
 
     if ((P <= 0 && c <= 0) || isNaN(rInput) || isNaN(t) || t <= 0) return;
 
-    // Year-by-year breakdown using rPeriod per compounding period
+    // Period-by-period breakdown (unit matches timePeriodUnit)
     const breakdown = [];
     let balance      = P;
     let totalContrib = P;
 
-    for (let y = 1; y <= Math.ceil(t); y++) {
-      const yearFrac     = Math.min(y, t) - (y - 1);
+    // Convert tRaw periods into years for each step
+    const periodToYears = (u) => {
+      if (u === 'days')   return 1 / 365;
+      if (u === 'weeks')  return 1 / 52;
+      if (u === 'months') return 1 / 12;
+      return 1;
+    };
+    const stepInYears = periodToYears(timePeriodUnit);
+
+    for (let p = 1; p <= Math.ceil(tRaw); p++) {
+      const periodFrac   = Math.min(p, tRaw) - (p - 1);
+      const yearFrac     = periodFrac * stepInYears;
       const startBalance = balance;
       const nPer         = n * yearFrac;
 
-      // Compound the balance for this year
       balance = startBalance * Math.pow(1 + rPeriod, nPer);
 
-      // Add contributions using future value of annuity
-      const contribsThisYear = cp * yearFrac;
-      const contribAmount    = c * contribsThisYear;
+      const contribsThisStep = cp * yearFrac;
+      const contribAmount    = c * contribsThisStep;
 
       if (c > 0) {
         const fvContrib = c * (cp / n) * ((Math.pow(1 + rPeriod, nPer) - 1) / rPeriod);
@@ -106,7 +114,7 @@ export default function CompoundInterestCalculator() {
 
       const interestEarned = balance - totalContrib;
       breakdown.push({
-        year: y,
+        period: p,
         balance,
         totalContrib,
         interestEarned: Math.max(interestEarned, 0),
@@ -208,16 +216,20 @@ export default function CompoundInterestCalculator() {
                 value={years}
                 onChange={e => { setYears(e.target.value); setResult(null); }}
                 onKeyDown={e => e.key === 'Enter' && calculate()} />
-              <div className="tag-row" style={{ marginTop: '6px', marginBottom: 0 }}>
-                {['days','weeks','months','years'].map(u => (
-                  <button key={u}
-                    className={`tag${timePeriodUnit === u ? ' active' : ''}`}
-                    style={{ fontSize: '0.75rem', padding: '3px 10px' }}
-                    onClick={() => { setTimePeriodUnit(u); setResult(null); }}>
-                    {u.charAt(0).toUpperCase() + u.slice(1)}
-                  </button>
-                ))}
-              </div>
+            </div>
+          </div>
+
+          {/* Time period unit */}
+          <div style={{ marginBottom: '18px' }}>
+            <label>Time Period Unit</label>
+            <div className="tag-row">
+              {['days','weeks','months','years'].map(u => (
+                <button key={u}
+                  className={`tag${timePeriodUnit === u ? ' active' : ''}`}
+                  onClick={() => { setTimePeriodUnit(u); setResult(null); }}>
+                  {u.charAt(0).toUpperCase() + u.slice(1)}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -323,14 +335,14 @@ export default function CompoundInterestCalculator() {
               </div>
 
               {/* Stats */}
-              <div className="result-grid" style={{ marginBottom: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
                 <div className="result-stat">
                   <div className="stat-value">{result.growthPct.toFixed(1)}%</div>
                   <div className="stat-label">Total Growth</div>
                 </div>
-                <div className="result-stat">
-                  <div className="stat-value">{result.effectiveRate.toFixed(2)}%</div>
-                  <div className="stat-label">Effective Rate</div>
+                <div className="result-stat" style={{ gridColumn: 'span 1' }}>
+                  <div className="stat-value" style={{ fontSize: 'clamp(0.75rem, 2vw, 1.1rem)', wordBreak: 'break-all', whiteSpace: 'normal' }}>{result.effectiveRate.toFixed(3)}%</div>
+                  <div className="stat-label">Effective Annual Rate</div>
                 </div>
                 <div className="result-stat">
                   <div className="stat-value" style={{ fontSize: '1rem' }}>{fmt(result.totalInterest, currency)}</div>
@@ -374,7 +386,7 @@ export default function CompoundInterestCalculator() {
 
               {/* Year-by-year table */}
               <button className="btn btn-ghost btn-sm" onClick={() => setShowTable(v => !v)}>
-                {showTable ? 'Hide year-by-year breakdown ▲' : 'Show year-by-year breakdown ▼'}
+                {showTable ? `Hide ${result.timePeriodUnit.slice(0,-1)}-by-${result.timePeriodUnit.slice(0,-1)} breakdown ▲` : `Show ${result.timePeriodUnit.slice(0,-1)}-by-${result.timePeriodUnit.slice(0,-1)} breakdown ▼`}
               </button>
 
               {showTable && (
@@ -382,15 +394,15 @@ export default function CompoundInterestCalculator() {
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                     <thead>
                       <tr style={{ borderBottom: '2px solid var(--border)' }}>
-                        {['Year', 'Balance', 'Total Deposited', 'Interest Earned'].map(h => (
+                        {[result.timePeriodUnit.charAt(0).toUpperCase() + result.timePeriodUnit.slice(1,-1), 'Balance', 'Total Deposited', 'Interest Earned'].map(h => (
                           <th key={h} style={{ padding: '8px 10px', textAlign: 'right', color: 'var(--text-2)', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {result.breakdown.map(row => (
-                        <tr key={row.year} style={{ borderBottom: '1px solid var(--border)' }}>
-                          <td style={{ padding: '7px 10px', textAlign: 'right', color: 'var(--text-3)' }}>Year {row.year}</td>
+                        <tr key={row.period} style={{ borderBottom: '1px solid var(--border)' }}>
+                          <td style={{ padding: '7px 10px', textAlign: 'right', color: 'var(--text-3)' }}>{result.timePeriodUnit.charAt(0).toUpperCase() + result.timePeriodUnit.slice(1,-1)} {row.period}</td>
                           <td style={{ padding: '7px 10px', textAlign: 'right', fontWeight: 600 }}>{fmt(row.balance, currency)}</td>
                           <td style={{ padding: '7px 10px', textAlign: 'right', color: 'var(--text-2)' }}>{fmt(row.totalContrib, currency)}</td>
                           <td style={{ padding: '7px 10px', textAlign: 'right', color: '#f97316', fontWeight: 600 }}>{fmt(row.interestEarned, currency)}</td>
