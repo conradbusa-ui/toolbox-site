@@ -334,7 +334,7 @@ export default function CompoundInterestCalculator() {
                   Future Value after {result.tRaw} {result.timePeriodUnit.charAt(0).toUpperCase() + result.timePeriodUnit.slice(1)}
                 </div>
                 <div style={{ fontSize: 'clamp(2.5rem, 8vw, 4rem)', fontWeight: 700, color: '#5eead4', letterSpacing: '-0.04em', lineHeight: 1 }}>
-                  {fmtInt(result.finalBalance, currency)}
+                  {fmtExact(result.finalBalance, currency)}
                 </div>
                 <div style={{ fontSize: '0.82rem', color: '#94a3b8', marginTop: '8px' }}>
                   Effective annual rate: {fmtPct(result.effectiveRate)}
@@ -343,16 +343,16 @@ export default function CompoundInterestCalculator() {
 
               {/* Key figures */}
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: '4px', marginBottom: '20px' }}>
-                <ResultRow label="Initial Principal"      value={fmtInt(result.P, currency)} />
+                <ResultRow label="Initial Principal"      value={fmtExact(result.P, currency)} />
                 {result.c > 0 && (
                   <ResultRow
                     label={`Total Contributions (${result.cp === 12 ? 'monthly' : 'yearly'})`}
-                    value={fmtInt(result.totalDeposited - result.P, currency)}
+                    value={fmtExact(result.totalDeposited - result.P, currency)}
                   />
                 )}
-                <ResultRow label="Total Amount Deposited" value={fmtInt(result.totalDeposited, currency)} />
-                <ResultRow label="Total Interest Earned"  value={fmtInt(result.totalInterest, currency)} />
-                <ResultRow label="Final Balance"          value={fmtInt(result.finalBalance, currency)} highlight />
+                <ResultRow label="Total Amount Deposited" value={fmtExact(result.totalDeposited, currency)} />
+                <ResultRow label="Total Interest Earned"  value={fmtExact(result.totalInterest, currency)} />
+                <ResultRow label="Final Balance"          value={fmtExact(result.finalBalance, currency)} highlight />
               </div>
 
               {/* Stats */}
@@ -366,11 +366,11 @@ export default function CompoundInterestCalculator() {
                   <div className="stat-label">Effective Annual Rate</div>
                 </div>
                 <div className="result-stat">
-                  <div className="stat-value" style={{ fontSize: '1rem' }}>{fmtInt(result.totalInterest, currency)}</div>
+                  <div className="stat-value" style={{ fontSize: '1rem' }}>{fmtExact(result.totalInterest, currency)}</div>
                   <div className="stat-label">Interest Earned</div>
                 </div>
                 <div className="result-stat">
-                  <div className="stat-value" style={{ fontSize: '1rem' }}>{fmtInt(result.finalBalance - result.totalDeposited, currency)}</div>
+                  <div className="stat-value" style={{ fontSize: '1rem' }}>{fmtExact(result.finalBalance - result.totalDeposited, currency)}</div>
                   <div className="stat-label">Profit on Deposits</div>
                 </div>
               </div>
