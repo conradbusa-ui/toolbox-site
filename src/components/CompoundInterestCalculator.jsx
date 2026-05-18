@@ -16,6 +16,11 @@ function fmtInt(n, currency) {
   return currency + (Math.round(n / 1000) * 1000).toLocaleString('en');
 }
 
+// Exact to nearest dollar — used in breakdown table
+function fmtExact(n, currency) {
+  return currency + Math.round(n).toLocaleString('en');
+}
+
 // Clean percentage — trims trailing zeros, max 2 decimal places
 function fmtPct(n) {
   if (Math.abs(n) >= 1000) {
@@ -419,9 +424,9 @@ export default function CompoundInterestCalculator() {
                       {result.breakdown.map(row => (
                         <tr key={row.period} style={{ borderBottom: '1px solid var(--border)' }}>
                           <td style={{ padding: '7px 10px', textAlign: 'right', color: 'var(--text-3)' }}>{result.timePeriodUnit.charAt(0).toUpperCase() + result.timePeriodUnit.slice(1,-1)} {row.period}</td>
-                          <td style={{ padding: '7px 10px', textAlign: 'right', fontWeight: 600 }}>{fmtInt(row.balance, currency)}</td>
-                          <td style={{ padding: '7px 10px', textAlign: 'right', color: 'var(--text-2)' }}>{fmtInt(row.totalContrib, currency)}</td>
-                          <td style={{ padding: '7px 10px', textAlign: 'right', color: '#f97316', fontWeight: 600 }}>{fmtInt(row.interestEarned, currency)}</td>
+                          <td style={{ padding: '7px 10px', textAlign: 'right', fontWeight: 600 }}>{fmtExact(row.balance, currency)}</td>
+                          <td style={{ padding: '7px 10px', textAlign: 'right', color: 'var(--text-2)' }}>{fmtExact(row.totalContrib, currency)}</td>
+                          <td style={{ padding: '7px 10px', textAlign: 'right', color: '#f97316', fontWeight: 600 }}>{fmtExact(row.interestEarned, currency)}</td>
                         </tr>
                       ))}
                     </tbody>
