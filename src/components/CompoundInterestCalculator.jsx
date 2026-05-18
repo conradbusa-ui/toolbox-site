@@ -64,7 +64,7 @@ const FREQ_OPTIONS = [
 export default function CompoundInterestCalculator() {
   const [currency, setCurrency]         = useState('$');
   const [principal, setPrincipal]       = useState('');
-  const [rate, setRate]                 = useState('40');
+  const [rate, setRate]                 = useState('');
   const [years, setYears]               = useState('');
   const [compoundFreq, setCompoundFreq] = useState(365);
   const [contribution, setContribution] = useState('');
@@ -168,7 +168,7 @@ export default function CompoundInterestCalculator() {
   };
 
   const reset = () => {
-    setPrincipal(''); setRate('40'); setYears('');
+    setPrincipal(''); setRate(''); setYears('');
     setContribution(''); setCompoundFreq(365); setRateMode('per-period');
     setTimePeriodUnit('years');
     setResult(null); setShowTable(false);
@@ -226,7 +226,7 @@ export default function CompoundInterestCalculator() {
               <label htmlFor="ci-rate">
                 Interest Rate % {rateMode === 'per-period' ? `per ${freqLabel}` : '(annual)'}
               </label>
-              <input id="ci-rate" type="number" min="0" step="0.01" placeholder="e.g. 40"
+              <input id="ci-rate" type="number" min="0" step="0.01" placeholder="e.g. 8"
                 value={rate}
                 onChange={e => { setRate(e.target.value); setResult(null); }}
                 onKeyDown={e => e.key === 'Enter' && calculate()} />
