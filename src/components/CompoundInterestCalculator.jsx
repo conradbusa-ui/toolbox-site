@@ -49,17 +49,29 @@ export default function CompoundInterestCalculator() {
   const [contribution, setContribution] = useState('');
   const [contribFreq, setContribFreq]   = useState('monthly'); // monthly | yearly
   const [rateMode, setRateMode]         = useState('per-period'); // 'annual' | 'per-period'
+  const [timePeriodUnit, setTimePeriodUnit] = useState('years'); // 'days'|'weeks'|'months'|'years'
   const [result, setResult]             = useState(null);
   const [showTable, setShowTable]       = useState(false);
 
   const freqLabel = FREQ_OPTIONS.find(f => f.value === compoundFreq)?.label.toLowerCase() ?? 'period';
+
+  // Convert entered time period to years for the maths
+  const toYears = (val, unit) => {
+    if (unit === 'days')   return val / 365;
+    if (unit === 'weeks')  return val / 52;
+    if (unit === 'months') return val / 12;
+    return val; // years
+  };
+
+  const timePeriodLabel = { days: 'Days', weeks: 'Weeks', months: 'Months', years: 'Years' }[timePeriodUnit];
 
   const calculate = () => {
     const P  = parseFloat(principal) || 0;
     // In per-period mode, rate is applied each period directly (r per period).
     // In annual mode, rate is split across periods as usual (r/n per period).
     const rInput = parseFloat(rate) / 100;
-    const t  = parseFloat(years);
+    const tRaw = parseFloat(years);
+    const t  = toYears(tRaw, timePeriodUnit);
     const n  = compoundFreq;
     // rPeriod = rate applied each compounding period
     const rPeriod = rateMode === 'per-period' ? rInput : rInput / n;
@@ -120,7 +132,7 @@ export default function CompoundInterestCalculator() {
 
     setResult({
       finalBalance, totalDeposited, totalInterest,
-      growthPct, effectiveRate, P, rInput, rateMode, t, n, c, cp,
+      growthPct, effectiveRate, P, rInput, rateMode, t, tRaw, timePeriodUnit, n, c, cp,
       breakdown,
     });
     setShowTable(false);
@@ -129,6 +141,7 @@ export default function CompoundInterestCalculator() {
   const reset = () => {
     setPrincipal(''); setRate('40'); setYears('');
     setContribution(''); setCompoundFreq(365); setRateMode('per-period');
+    setTimePeriodUnit('years');
     setResult(null); setShowTable(false);
   };
 
@@ -190,11 +203,21 @@ export default function CompoundInterestCalculator() {
                 onKeyDown={e => e.key === 'Enter' && calculate()} />
             </div>
             <div className="form-group" style={{ flex: 2 }}>
-              <label htmlFor="ci-years">Time Period (Years)</label>
-              <input id="ci-years" type="number" min="1" placeholder="e.g. 10"
+              <label htmlFor="ci-years">Time Period ({timePeriodLabel})</label>
+              <input id="ci-years" type="number" min="1" placeholder={`e.g. ${timePeriodUnit === 'days' ? '30' : timePeriodUnit === 'weeks' ? '52' : timePeriodUnit === 'months' ? '12' : '1'}`}
                 value={years}
                 onChange={e => { setYears(e.target.value); setResult(null); }}
                 onKeyDown={e => e.key === 'Enter' && calculate()} />
+              <div className="tag-row" style={{ marginTop: '6px', marginBottom: 0 }}>
+                {['days','weeks','months','years'].map(u => (
+                  <button key={u}
+                    className={`tag${timePeriodUnit === u ? ' active' : ''}`}
+                    style={{ fontSize: '0.75rem', padding: '3px 10px' }}
+                    onClick={() => { setTimePeriodUnit(u); setResult(null); }}>
+                    {u.charAt(0).toUpperCase() + u.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -275,7 +298,7 @@ export default function CompoundInterestCalculator() {
                 marginBottom: '20px',
               }}>
                 <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#64748b', marginBottom: '6px' }}>
-                  Future Value after {result.t} {result.t === 1 ? 'Year' : 'Years'}
+                  Future Value after {result.tRaw} {result.timePeriodUnit.charAt(0).toUpperCase() + result.timePeriodUnit.slice(1)}
                 </div>
                 <div style={{ fontSize: 'clamp(2.5rem, 8vw, 4rem)', fontWeight: 700, color: '#5eead4', letterSpacing: '-0.04em', lineHeight: 1 }}>
                   {fmt(result.finalBalance, currency)}
